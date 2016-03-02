@@ -12,6 +12,60 @@ def connect():
     return conn
 
 
+def apocalypse():
+    """Checks for the existence of tables then destroys them."""
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'public';"""
+                )
+    results = cur.fetchall()
+    for r in results:
+        print r
+        r = r[0]
+        print r
+        cur.execute("""DROP TABLE %s CASCADE;""" % r)
+    conn.commit()
+    conn.close()
+
+
+def setup():
+    """Creates the tables."""
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE tournaments (
+          id SERIAL PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
+          game text NOT NULL
+        );"""
+                )
+    cur.execute("""
+        CREATE TABLE players (
+          id SERIAL PRIMARY KEY NOT NULL,
+          tournament INT REFERENCES tournaments(id),
+          name TEXT NOT NULL,
+          wins INT DEFAULT 0,
+          draws INT DEFAULT 0,
+          losses INT DEFAULT 0,
+          byes INT DEFAULT 0,
+          matches INT DEFAULT 0
+        );"""
+                )
+    cur.execute("""
+        CREATE TABLE matches (
+          id SERIAL PRIMARY KEY NOT NULL,
+          player1 INT REFERENCES players(id),
+          player2 INT REFERENCES players(id),
+          tournament INT REFERENCES tournaments(id),
+          date DATE DEFAULT current_date,
+          winner INT REFERENCES players(id)
+        );"""
+                )
+    conn.commit()
+    conn.close()
+
 def deleteMatches(tournament):
     """Remove all the match records from the database for a particular tournament."""
     conn = connect()
@@ -19,13 +73,13 @@ def deleteMatches(tournament):
     cur.execute("""
         DELETE FROM matches WHERE tournament = (%s);""",
         (tournament)
-    )
+                )
     cur.execute("""
         UPDATE players
         SET wins = 0, draws = 0, losses = 0, byes = 0, matches = 0
         WHERE tournament = (tournament);""",
         (tournament)
-    )
+                )
     conn.commit()
     conn.close()
 
@@ -63,9 +117,9 @@ def createTournament(name, game):
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO tournaments (name, game)
-        VALUES ('%s', '%s');""",
+        VALUES (%s, %s);""",
         (name, game)
-    )
+                )
     conn.commit()
     conn.close()
 
@@ -88,7 +142,7 @@ def registerPlayer(tournament, name):
         INSERT INTO players (tournament, name)
         VALUES (%s, %s);""",
         (tournament, name)
-    )
+                )
     conn.commit()
     conn.close()
 
@@ -117,7 +171,7 @@ def playerStandings(tournament):
         WHERE tournament = (%s)
         ORDER BY wins;""",
         (tournament)
-    )
+                )
     result = cur.fetchall()
     conn.close()
     return result
@@ -138,40 +192,40 @@ def reportMatch(player1, player2, tournament, winner):
         INSERT INTO matches (player1, player2, tournament, winner)
         VALUES (%s, %s, %s, %s);""",
         (player1, player2, tournament, winner)
-    )
+                )
     if winner == player1:
         cur.execute("""
             UPDATE players
             SET wins = wins + 1, matches = matches + 1
-            WHERE id = (%s);""",
-            ([player1])
-        )
+            WHERE id = %s;""",
+            (player1,)
+                    )
         cur.execute("""
             UPDATE players
             SET losses = losses + 1, matches = matches + 1
-            WHERE id = (%s);""",
-            ([player2])
-        )
+            WHERE id = %s;""",
+            (player2,)
+                    )
     if winner == player2:
         cur.execute("""
             UPDATE players
             SET wins = wins + 1, matches = matches +1
-            WHERE id = (%s);""",
-            ([player2])
-        )
+            WHERE id = %s;""",
+            (player2,)
+                    )
         cur.execute("""
             UPDATE players
             SET losses = losses +1, matches = matches + 1
-            WHERE id = (%s);""",
-            ([player1])
-        )
-    elif winner == None:
+            WHERE id = %s;""",
+            (player1,)
+                    )
+    elif not winner:
         cur.execute("""
             UPDATE players
             SET draws = draws + 1, matches = matches + 1
-            WHERE id IN (%s, %s);"""
-            ([player1], [player2])
-        )
+            WHERE id IN (%s, %s);""",
+                    (player1, player2)
+                    )
     conn.commit()
     conn.close()
 
@@ -196,7 +250,7 @@ def swissPairings():
     cur.execute("""
         SELECT id, name FROM players
         ORDER BY wins, draws;"""
-    )
+                )
     results = cur.fetchall()
     if len(results) % 2 == 0:
         pairings = []
@@ -205,7 +259,28 @@ def swissPairings():
             pairings.append(pair)
         conn.close()
         return pairings
-#    elif len(results) % 2 == 1:
-#        pairings = []
+    elif len(results) % 2 == 1:
+        cur.execute("""
+            SELECT id FROM players
+            ORDER BY byes;"""
+                    )
+        bye = cur.fetchone()
+        cur.execute("""
+            UPDATE players
+            SET wins = wins + 1, byes = byes + 1, matches = matches + 1
+            WHERE id = (%s);""",
+            (bye)
+                    )
+        conn.commit()
+        bye = bye[0]
+        for r in results:
+            if r[0] == bye:
+                results.remove(r)
+        pairings = []
+        for p in range(0, len(results), 2):
+            pair = results[p] + results[p + 1]
+            pairings.append(pair)
+        conn.close()
+        return pairings
 
 

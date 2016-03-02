@@ -8,6 +8,17 @@
 
 from tournament import *
 
+def testSetup():
+    """
+    Test for initial database creation and creating a tournament.
+    """
+    apocalypse()
+    print "0-A. apocalypse() drops all of the tables."
+    setup()
+    print "0-B. setup() creates tables."
+    createTournament("Check-A-Thon 2016", "checkers")
+    print "0-C. createTournament() creates a tournament."
+
 def testCount():
     """
     Test for initial player count,
@@ -148,9 +159,56 @@ def testPairings():
     print "10. After one match, players with one win are properly paired."
 
 
+def testByes():
+    """
+    Test that pairs with odd numbers assign byes and generate pairs properly.
+    """
+    deleteMatches("1")
+    deletePlayers()
+    registerPlayer("1", "Twilight Sparkle")
+    registerPlayer("1", "Fluttershy")
+    registerPlayer("1", "Applejack")
+    registerPlayer("1", "Pinkie Pie")
+    registerPlayer("1", "Rarity")
+    registerPlayer("1", "Rainbow Dash")
+    registerPlayer("1", "Princess Celestia")
+    registerPlayer("1", "Princess Luna")
+    registerPlayer("1", "Spike")
+    standings = playerStandings("1")
+    [id1, id2, id3, id4, id5, id6, id7, id8, id9] = [row[0] for row in standings]
+    pairings = swissPairings()
+    if len(pairings) != 4:
+        raise ValueError(
+            "For nine players, swissPairings should return 4 pairs. Got {pairs}".format(pairs=len(pairings)))
+    reportMatch(id2, id3, "1", id2)
+    reportMatch(id4, id5, "1", id4)
+    reportMatch(id6, id7, "1", id6)
+    reportMatch(id8, id9, "1", id8)
+    pairings = swissPairings()
+    if len(pairings) != 4:
+        raise ValueError(
+            "For nine players, swissPairings should return 4 pairs. Got {pairs}".format(pairs=len(pairings)))
+    [(pid1, pname1, pid2, pname2), (pid3, pname3, pid4, pname4), (pid5, pname5, pid6, pname6), (pid7, pname7, pid8, pname8)] = pairings
+    expected_pairs = set([frozenset([id3, id5]), frozenset([id7, id8]),
+                          frozenset([id6, id2]), frozenset([id1, id4]),
+                          ])
+    actual_pairs = set([frozenset([pid1, pid2]), frozenset([pid3, pid4]), frozenset([pid5, pid6]), frozenset([pid7, pid8])])
+    for pair in actual_pairs:
+        if pair not in expected_pairs:
+            raise ValueError(
+                "Something broke and you got an unexpected pair! Fix it!")
+    reportMatch(pid1, pid2, "1", pid1)
+    reportMatch(pid3, pid4, "1", pid3)
+    reportMatch(pid5, pid6, "1", pid5)
+    reportMatch(pid7, pid8, "1", None)
+
+
 if __name__ == '__main__':
+    testSetup()
     testCount()
     testStandingsBeforeMatches()
     testReportMatches()
     testPairings()
-    print "Success!  All tests pass!"
+    print "Success! All primary tests pass!"
+    testByes()
+    print "Bonus! Tournaments with odd numbers of players assign byes and you can have draws!"

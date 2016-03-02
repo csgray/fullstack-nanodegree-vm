@@ -7,6 +7,7 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
+-- Creates
 CREATE TABLE tournaments (
   id SERIAL PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
@@ -29,6 +30,6 @@ CREATE TABLE matches (
   player1 INT REFERENCES players(id),
   player2 INT REFERENCES players(id),
   tournament INT REFERENCES tournaments(id),
-  date DATE DEFAULT GETDATE(),
+  date DATE DEFAULT current_date,
   winner INT REFERENCES players(id)
 );

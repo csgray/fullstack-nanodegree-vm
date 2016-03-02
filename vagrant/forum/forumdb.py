@@ -3,7 +3,11 @@
 # 
 
 import time
+import psycopg2
+import bleach
 
+"""
+Original Python code that mimicks a database using a list
 ## Database connection
 DB = []
 
@@ -29,3 +33,30 @@ def AddPost(content):
     '''
     t = time.strftime('%c', time.localtime())
     DB.append((t, content))
+"""
+
+
+def GetAllPosts():
+    """Get all posts from the database, sorted with the newest first."""
+    db = psycopg2.connect("dbname=forum")
+    c = db.cursor()
+    query = "SELECT content, time FROM posts ORDER BY time DESC"
+    c.execute(query)
+    rows = c.fetchall()
+    posts = [{'content': str(bleach.clean(row[0])), 'time': str(row[1])} for row in rows]
+    db.close()
+    return posts
+
+
+def AddPost(content):
+    """Add a new post to the database.
+
+    Args:
+      content: The text content of the new post.
+    """
+    db = psycopg2.connect("dbname=forum")
+    c = db.cursor()
+    c.execute("INSERT INTO posts (content) VALUES (%s)",
+              (content,))
+    db.commit()
+    db.close()
