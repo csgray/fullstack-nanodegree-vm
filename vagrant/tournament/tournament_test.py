@@ -200,7 +200,7 @@ def testByes():
     reportMatch(pid1, pid2, "1", pid1)
     reportMatch(pid3, pid4, "1", pid3)
     reportMatch(pid5, pid6, "1", pid5)
-    reportMatch(pid7, pid8, "1", None)
+    reportMatch(pid7, pid8, "1", None) # Creates a draw
 
 
 if __name__ == '__main__':

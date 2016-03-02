@@ -7,7 +7,6 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
--- Creates
 CREATE TABLE tournaments (
   id SERIAL PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
