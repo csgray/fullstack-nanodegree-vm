@@ -8,16 +8,6 @@
 
 from tournament import *
 
-def testSetup():
-    """
-    Test for initial database creation and creating a tournament.
-    """
-    apocalypse()
-    print "0-A. apocalypse() drops all of the tables."
-    setup()
-    print "0-B. setup() creates tables."
-    createTournament("Check-A-Thon 2016", "checkers")
-    print "0-C. createTournament() creates a tournament."
 
 def testCount():
     """
@@ -204,7 +194,6 @@ def testByes():
 
 
 if __name__ == '__main__':
-    testSetup()
     testCount()
     testStandingsBeforeMatches()
     testReportMatches()

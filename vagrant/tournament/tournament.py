@@ -7,77 +7,20 @@ import psycopg2
 
 
 def connect():
-    """Connect to the PostgreSQL database.  Returns a database connection."""
+    """Connect to the PostgreSQL database.
+
+    Returns: a database connection and the cursor.
+    """
     conn = psycopg2.connect("dbname=tournament")
-    return conn
-
-
-def apocalypse():
-    """Checks for the existence of tables then destroys them."""
-    conn = connect()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT table_name FROM information_schema.tables
-        WHERE table_schema = 'public';"""
-                )
-    results = cur.fetchall()
-    for r in results:
-        print r
-        r = r[0]
-        print r
-        cur.execute("""DROP TABLE %s CASCADE;""" % r)
-    conn.commit()
-    conn.close()
+    return conn, cur
 
-
-def setup():
-    """Creates the tables."""
-    conn = connect()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE tournaments (
-          id SERIAL PRIMARY KEY NOT NULL,
-          name TEXT NOT NULL,
-          game text NOT NULL
-        );"""
-                )
-    cur.execute("""
-        CREATE TABLE players (
-          id SERIAL PRIMARY KEY NOT NULL,
-          tournament INT REFERENCES tournaments(id),
-          name TEXT NOT NULL,
-          wins INT DEFAULT 0,
-          draws INT DEFAULT 0,
-          losses INT DEFAULT 0,
-          byes INT DEFAULT 0,
-          matches INT DEFAULT 0
-        );"""
-                )
-    cur.execute("""
-        CREATE TABLE matches (
-          id SERIAL PRIMARY KEY NOT NULL,
-          player1 INT REFERENCES players(id),
-          player2 INT REFERENCES players(id),
-          tournament INT REFERENCES tournaments(id),
-          date DATE DEFAULT current_date,
-          winner INT REFERENCES players(id)
-        );"""
-                )
-    conn.commit()
-    conn.close()
 
 def deleteMatches(tournament):
     """Remove all the match records from the database for a particular tournament."""
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""
         DELETE FROM matches WHERE tournament = (%s);""",
-        (tournament)
-                )
-    cur.execute("""
-        UPDATE players
-        SET wins = 0, draws = 0, losses = 0, byes = 0, matches = 0
-        WHERE tournament = (tournament);""",
         (tournament)
                 )
     conn.commit()
@@ -86,8 +29,7 @@ def deleteMatches(tournament):
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""DELETE FROM players;""")
     conn.commit()
     conn.close()
@@ -95,8 +37,7 @@ def deletePlayers():
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""SELECT COUNT(*) from players;""")
     result = cur.fetchone()
     number = result[0]
@@ -113,8 +54,7 @@ def createTournament(name, game):
       name: name of the tournament (such as 'Check-A-Thon 2016').
       game: name of the game being played (such as 'checkers').
     """
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""
         INSERT INTO tournaments (name, game)
         VALUES (%s, %s);""",
@@ -136,8 +76,7 @@ def registerPlayer(tournament, name):
       tournament: serial id from tournaments table (mandatory foreign key).
       name: the player's full name (need not be unique).
     """
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""
         INSERT INTO players (tournament, name)
         VALUES (%s, %s);""",
@@ -164,8 +103,7 @@ def playerStandings(tournament):
         byes: whether or not the player has received a bye (0 or 1)
         matches: the number of matches the player has played
     """
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""
         SELECT * FROM players
         WHERE tournament = (%s)
@@ -186,8 +124,7 @@ def reportMatch(player1, player2, tournament, winner):
       player2:  the id number of the second player
       winner: the id number of the player who won or none for a draw
     """
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""
         INSERT INTO matches (player1, player2, tournament, winner)
         VALUES (%s, %s, %s, %s);""",
@@ -245,8 +182,7 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     cur.execute("""
         SELECT id, name FROM players
         ORDER BY wins, draws;"""
