@@ -28,42 +28,65 @@ CREATE TABLE players (
 
 CREATE TABLE registrations (
   tournament INT REFERENCES tournaments(id) NOT NULL,
-  player INT REFERENCES players(id) NOT NULL
+  player INT REFERENCES players(id) NOT NULL,
+  PRIMARY KEY (tournament, player)
 );
 
 CREATE TABLE matches (
-  id SERIAL PRIMARY KEY NOT NULL,
   tournament INT REFERENCES tournaments(id) NOT NULL,
   date DATE DEFAULT current_date,
-  winner INT REFERENCES players(id) NOT NULL,
-  loser INT REFERENCES players(id) NOT NULL,
-  draw BOOLEAN DEFAULT FALSE
+  player1 INT REFERENCES players(id) NOT NULL,
+  player2 INT REFERENCES players(id) NOT NULL,
+  winner INT REFERENCES players(id),
+  PRIMARY KEY (tournament, player1, player2)
 );
 
 CREATE VIEW wins AS
-  SELECT m.tournament, p.id, p.name, count(m.winner)
-  FROM players p INNER JOIN matches m ON p.id = m.winner
-  WHERE m.draw = false
-  GROUP BY m.tournament, p.id;
+  SELECT p.id, p.name, m.tournament, count(m.winner)
+  FROM players p
+  INNER JOIN matches m ON p.id = m.winner
+  GROUP BY m.tournament, p.id
+  ORDER BY m.tournament, p.id;
 
 CREATE VIEW losses AS
-  SELECT m.tournament, p.id, p.name, count(m.loser)
-  FROM players p INNER JOIN matches m ON p.id = m.loser
-  WHERE m.winner != m.loser
-  GROUP BY m.tournament, p.id;
+  SELECT p.id, p.name, m.tournament, count(m.player1 + m.player2)
+  FROM players p
+  INNER JOIN matches m ON
+    (p.id = m.player1 OR p.id = m.player2) AND (p.id != m.winner)
+  GROUP BY m.tournament, p.id
+  ORDER BY m.tournament, p.id;
 
 CREATE VIEW draws AS
-  SELECT m.tournament, p.id, p.name, count(p.id)
-  FROM players p INNER JOIN matches m ON (p.id = m.winner OR p.id = m.loser)
-  WHERE m.draw = true
-  GROUP BY m.tournament, p.id;
+  SELECT p.id, p.name, m.tournament, count(m.player1 + m.player2)
+  FROM players p
+  INNER JOIN matches m ON
+    (p.id = m.player1 OR p.id = m.player2) AND (m.winner IS NULL)
+  GROUP BY m.tournament, p.id
+  ORDER BY m.tournament, p.id;
 
 CREATE VIEW byes AS
-  SELECT m.tournament, p.id, p.name, count(m.winner)
-  FROM players p INNER JOIN matches m ON (p.id = m.winner AND p.id = m.loser)
-  GROUP BY m.tournament, p.id;
+  SELECT p.id, p.name, m.tournament, count(m.winner)
+  FROM players p
+  INNER JOIN matches m ON (p.id = m.winner) AND (m.player1 = m.player2)
+  GROUP BY m.tournament, p.id
+  ORDER BY m.tournament, p.id;
 
--- MOCK DATA FOR TESTING:
+/* MOCK DATA FOR TESTING
+Tournament 1:
+  Arnold:  2 wins, 0 losses, 0 draws, 0 byes
+  Bob:     1 win,  1 loss,   0 draws, 0 byes
+  Charlie: 0 wins, 1 loss,   1 draw,  0 byes
+  Dave:    1 win,  0 losses, 1 draw,  1 bye
+  Eric:    1 win,  1 loss,   0 draws, 1 bye
+
+Tournament 2:
+  Arnold:  1 win, 0 losses, 1 draw,  0 byes
+  Bob:     1 win, 1 loss,   0 draws, 0 byes
+  Charlie: 1 win, 0 losses, 1 draw,  0 byes
+  Frank:   1 win, 1 loss,   0 draws, 1 bye
+  George:  1 win, 1 loss,   0 draws, 1 bye
+ */
+
 INSERT INTO tournaments (name, game) VALUES ('Check-A-Thon 2016', 'checkers');
 INSERT INTO tournaments (name, game) VALUES ('Chess Masters', 'chess');
 INSERT INTO players (name) VALUES ('Arnold');
@@ -83,15 +106,15 @@ INSERT INTO registrations (tournament, player) VALUES ('2', '2');
 INSERT INTO registrations (tournament, player) VALUES ('2', '3');
 INSERT INTO registrations (tournament, player) VALUES ('2', '6');
 INSERT INTO registrations (tournament, player) VALUES ('2', '7');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('1', '1', '2', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('1', '3', '4', 'True');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('1', '5', '5', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('1', '1', '5', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('1', '2', '3', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('1', '4', '4', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('2', '1', '2', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('2', '3', '6', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('2', '7', '7', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('2', '3', '1', 'True');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('2', '2', '7', 'False');
-INSERT INTO matches (tournament, winner, loser, draw) VALUES ('2', '6', '6', 'False');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('1', '1', '2', '1');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('1', '3', '4', NULL);
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('1', '5', '5', '5');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('1', '1', '5', '1');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('1', '2', '3', '2');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('1', '4', '4', '4');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('2', '1', '2', '1');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('2', '3', '6', '3');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('2', '7', '7', '7');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('2', '3', '1', NULL);
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('2', '2', '7', '2');
+INSERT INTO matches (tournament, player1, player2, winner) VALUES ('2', '6', '6', '6');
