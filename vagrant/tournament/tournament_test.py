@@ -15,7 +15,7 @@ def testCount():
              player count after 1 and 2 players registered,
              player count after players deleted.
     """
-    deleteMatches("1")
+    deleteMatches()
     deletePlayers()
     c = countPlayers()
     if c == '0':
@@ -24,13 +24,13 @@ def testCount():
     if c != 0:
         raise ValueError("After deletion, countPlayers should return zero.")
     print "1. countPlayers() returns 0 after initial deletePlayers() execution."
-    registerPlayer("1", "Chandra Nalaar")
+    registerPlayer("Chandra Nalaar")
     c = countPlayers()
     if c != 1:
         raise ValueError(
             "After one player registers, countPlayers() should be 1. Got {c}".format(c=c))
     print "2. countPlayers() returns 1 after one player is registered."
-    registerPlayer("1", "Jace Beleren")
+    registerPlayer("Jace Beleren")
     c = countPlayers()
     if c != 2:
         raise ValueError(
@@ -48,11 +48,11 @@ def testStandingsBeforeMatches():
     Test to ensure players are properly represented in standings prior
     to any matches being reported.
     """
-    deleteMatches("1")
+    deleteMatches()
     deletePlayers()
-    registerPlayer("1", "Melpomene Murray")
-    registerPlayer("1", "Randy Schwartz")
-    standings = playerStandings("1")
+    registerPlayer("Melpomene Murray")
+    registerPlayer("Randy Schwartz")
+    standings = playerStandings()
     if len(standings) < 2:
         raise ValueError("Players should appear in playerStandings even before "
                          "they have played any matches.")
@@ -75,18 +75,18 @@ def testReportMatches():
     Test that matches are reported properly.
     Test to confirm matches are deleted properly.
     """
-    deleteMatches("1")
+    deleteMatches()
     deletePlayers()
-    registerPlayer("1", "Bruno Walton")
-    registerPlayer("1", "Boots O'Neal")
-    registerPlayer("1", "Cathy Burton")
-    registerPlayer("1", "Diane Grant")
-    standings = playerStandings("1")
+    registerPlayer("Bruno Walton")
+    registerPlayer("Boots O'Neal")
+    registerPlayer("Cathy Burton")
+    registerPlayer("Diane Grant")
+    standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2, "1", id1)
-    reportMatch(id3, id4, "1", id3)
-    standings = playerStandings("1")
-    for (i, n, w, l, d, m, b) in standings:
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
+    standings = playerStandings()
+    for (i, n, w, d, l, m, b) in standings:
         if m != 1:
             raise ValueError("Each player should have one match recorded.")
         if i in (id1, id3) and w != 1:
@@ -94,11 +94,11 @@ def testReportMatches():
         elif i in (id2, id4) and w != 0:
             raise ValueError("Each match loser should have zero wins recorded.")
     print "7. After a match, players have updated standings."
-    deleteMatches("1")
-    standings = playerStandings("1")
+    deleteMatches()
+    standings = playerStandings()
     if len(standings) != 4:
         raise ValueError("Match deletion should not change number of players in standings.")
-    for (i, n, w, l, d, m, b) in standings:
+    for (i, n, w, d, l, m, b) in standings:
         if m != 0:
             raise ValueError("After deleting matches, players should have zero matches recorded.")
         if w != 0:
@@ -109,26 +109,26 @@ def testPairings():
     """
     Test that pairings are generated properly both before and after match reporting.
     """
-    deleteMatches("1")
+    deleteMatches()
     deletePlayers()
-    registerPlayer("1", "Twilight Sparkle")
-    registerPlayer("1", "Fluttershy")
-    registerPlayer("1", "Applejack")
-    registerPlayer("1", "Pinkie Pie")
-    registerPlayer("1", "Rarity")
-    registerPlayer("1", "Rainbow Dash")
-    registerPlayer("1", "Princess Celestia")
-    registerPlayer("1", "Princess Luna")
-    standings = playerStandings("1")
+    registerPlayer("Twilight Sparkle")
+    registerPlayer("Fluttershy")
+    registerPlayer("Applejack")
+    registerPlayer("Pinkie Pie")
+    registerPlayer("Rarity")
+    registerPlayer("Rainbow Dash")
+    registerPlayer("Princess Celestia")
+    registerPlayer("Princess Luna")
+    standings = playerStandings()
     [id1, id2, id3, id4, id5, id6, id7, id8] = [row[0] for row in standings]
     pairings = swissPairings()
     if len(pairings) != 4:
         raise ValueError(
             "For eight players, swissPairings should return 4 pairs. Got {pairs}".format(pairs=len(pairings)))
-    reportMatch(id1, id2, "1", id1)
-    reportMatch(id3, id4, "1", id3)
-    reportMatch(id5, id6, "1", id5)
-    reportMatch(id7, id8, "1", id7)
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
+    reportMatch(id5, id6, id5)
+    reportMatch(id7, id8, id7)
     pairings = swissPairings()
     if len(pairings) != 4:
         raise ValueError(
@@ -153,27 +153,27 @@ def testByes():
     """
     Test that pairs with odd numbers assign byes and generate pairs properly.
     """
-    deleteMatches("1")
+    deleteMatches()
     deletePlayers()
-    registerPlayer("1", "Twilight Sparkle")
-    registerPlayer("1", "Fluttershy")
-    registerPlayer("1", "Applejack")
-    registerPlayer("1", "Pinkie Pie")
-    registerPlayer("1", "Rarity")
-    registerPlayer("1", "Rainbow Dash")
-    registerPlayer("1", "Princess Celestia")
-    registerPlayer("1", "Princess Luna")
-    registerPlayer("1", "Spike")
-    standings = playerStandings("1")
+    registerPlayer("Twilight Sparkle")
+    registerPlayer("Fluttershy")
+    registerPlayer("Applejack")
+    registerPlayer("Pinkie Pie")
+    registerPlayer("Rarity")
+    registerPlayer("Rainbow Dash")
+    registerPlayer("Princess Celestia")
+    registerPlayer("Princess Luna")
+    registerPlayer("Spike")
+    standings = playerStandings()
     [id1, id2, id3, id4, id5, id6, id7, id8, id9] = [row[0] for row in standings]
     pairings = swissPairings()
     if len(pairings) != 4:
         raise ValueError(
             "For nine players, swissPairings should return 4 pairs. Got {pairs}".format(pairs=len(pairings)))
-    reportMatch(id2, id3, "1", id2)
-    reportMatch(id4, id5, "1", id4)
-    reportMatch(id6, id7, "1", id6)
-    reportMatch(id8, id9, "1", id8)
+    reportMatch(id2, id3, id2)
+    reportMatch(id4, id5, id4)
+    reportMatch(id6, id7, id6)
+    reportMatch(id8, id9, id8)
     pairings = swissPairings()
     if len(pairings) != 4:
         raise ValueError(
@@ -187,10 +187,10 @@ def testByes():
         if pair not in expected_pairs:
             raise ValueError(
                 "Something broke and you got an unexpected pair! Fix it!")
-    reportMatch(pid1, pid2, "1", pid1)
-    reportMatch(pid3, pid4, "1", pid3)
-    reportMatch(pid5, pid6, "1", pid5)
-    reportMatch(pid7, pid8, "1", None) # Creates a draw
+    reportMatch(pid1, pid2, pid1)
+    reportMatch(pid3, pid4, pid3)
+    reportMatch(pid5, pid6, pid5)
+    reportMatch(pid7, pid8, None) # Creates a draw
 
 
 if __name__ == '__main__':
